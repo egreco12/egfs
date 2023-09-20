@@ -10,8 +10,8 @@ import (
 
 func main() {
 	fmt.Printf("Welcome to egfs.  Enter input: \n")
-	root := egfs.Node{Nodes: nil, File: nil, IsDirectory: true, Name: "/"}
-	egfs := egfs.EGFileSystem{Cwd: &root, Root: &root}
+	root := egfs.Node{Nodes: nil, File: nil, IsDirectory: true, Name: ""}
+	egfs := egfs.EGFileSystem{Cwd: &root, Root: &root, CwdPath: ""}
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		input, err := reader.ReadString('\n')

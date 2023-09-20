@@ -6,8 +6,9 @@ import (
 )
 
 type EGFileSystem struct {
-	Cwd  *Node
-	Root *Node
+	Cwd     *Node
+	Root    *Node
+	CwdPath string
 }
 
 func (egfs *EGFileSystem) ProcessInput(input string) {
@@ -59,7 +60,7 @@ func (egfs *EGFileSystem) Get(command []string) {
 				return
 			}
 
-			fmt.Printf("=> %s", egfs.Cwd.Name)
+			fmt.Printf("=> /%s", egfs.CwdPath)
 			return
 		}
 
@@ -85,6 +86,11 @@ func (egfs *EGFileSystem) Make(command []string) {
 		fmt.Printf("Invalid name %s: must be wrapped in quotes.", name)
 		return
 	}
+
+	if command[2] != "directory" {
+		fmt.Print("Invalid Make command.")
+		return
+	}
 	newDir := Node{Nodes: nil, File: nil, IsDirectory: true, Name: name}
 	egfs.Cwd.Nodes = append(egfs.Cwd.Nodes, &newDir)
 }
@@ -101,10 +107,21 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	}
 
 	newCwdName := command[3]
+	var found bool = false
 	for _, dir := range egfs.Cwd.Nodes {
 		if dir.Name == newCwdName {
+			newCwdName := strings.ReplaceAll(newCwdName, "\"", "")
+			found = true
+			if egfs.CwdPath == "" {
+				egfs.CwdPath = newCwdName
+			} else {
+				egfs.CwdPath = fmt.Sprintf("%s/%s", egfs.CwdPath, newCwdName)
+			}
 			egfs.Cwd = dir
-			fmt.Printf("=> %s", dir.Name)
 		}
+	}
+
+	if !found {
+		fmt.Print("Directory not found.")
 	}
 }
