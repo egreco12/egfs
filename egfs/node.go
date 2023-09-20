@@ -1,7 +1,7 @@
 package egfs
 
 type Node struct {
-	Nodes       []*Node
+	Nodes       map[string]*Node
 	Name        string
 	IsDirectory bool
 	File        *File

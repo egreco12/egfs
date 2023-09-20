@@ -28,6 +28,9 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 	case "get":
 		egfs.Get(command)
 
+	case "delete":
+		egfs.Delete(command)
+
 	default:
 		fmt.Print("Invalid command.  Try again!")
 	}
@@ -37,11 +40,14 @@ func (egfs *EGFileSystem) PrintCwdContents() {
 	length := len(egfs.Cwd.Nodes)
 	builder := strings.Builder{}
 	builder.WriteString("[")
-	for index, node := range egfs.Cwd.Nodes {
+	index := 0
+	for _, node := range egfs.Cwd.Nodes {
 		builder.WriteString(node.Name)
 		if index < length-1 {
 			builder.WriteString(",")
 		}
+
+		index++
 	}
 	builder.WriteString("]\n")
 	fmt.Print(builder.String())
@@ -83,26 +89,26 @@ func (egfs *EGFileSystem) Make(command []string) {
 
 	name := command[1]
 	if !strings.HasPrefix(name, "\"") && !strings.HasSuffix(name, "\"") {
-		fmt.Printf("Invalid name %s: must be wrapped in quotes.", name)
+		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", name)
 		return
 	}
 
 	if command[2] != "directory" {
-		fmt.Print("Invalid Make command.")
+		fmt.Print("Error: Invalid Make command.")
 		return
 	}
-	newDir := Node{Nodes: nil, File: nil, IsDirectory: true, Name: name}
-	egfs.Cwd.Nodes = append(egfs.Cwd.Nodes, &newDir)
+	newDir := Node{Nodes: make(map[string]*Node), File: nil, IsDirectory: true, Name: name}
+	egfs.Cwd.Nodes[newDir.Name] = &newDir
 }
 
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	if len(command) < 4 {
-		fmt.Print("Invalid change directory command.  Must contain 4 strings")
+		fmt.Print("Error: Invalid change directory command.  Must contain 4 strings")
 		return
 	}
 
 	if command[1] != "directory" && command[2] != "to" {
-		fmt.Print("Invalid change directory command.  The command must be of format \"change directory to \"<new_directory>\"\"")
+		fmt.Print("Error: Invalid change directory command.  The command must be of format \"change directory to \"<new_directory>\"\"")
 		return
 	}
 
@@ -124,4 +130,19 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	if !found {
 		fmt.Print("Directory not found.")
 	}
+}
+
+func (egfs *EGFileSystem) Delete(command []string) {
+	entity := command[1]
+	if !strings.HasPrefix(entity, "\"") && !strings.HasSuffix(entity, "\"") {
+		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
+		return
+	}
+
+	if command[2] != "directory" {
+		fmt.Print("Error: invalid entity type provided.")
+	}
+
+	// Node to delete can only be in CWD's contents
+	delete(egfs.Cwd.Nodes, entity)
 }
