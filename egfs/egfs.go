@@ -6,8 +6,8 @@ import (
 )
 
 type EGFileSystem struct {
-	Cwd  *Directory
-	Root *Directory
+	Cwd  *Node
+	Root *Node
 }
 
 func (egfs *EGFileSystem) ProcessInput(input string) {
@@ -32,26 +32,12 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 	}
 }
 
-func (egfs *EGFileSystem) PrintCwdDirectories() {
-	length := len(egfs.Cwd.Directories)
+func (egfs *EGFileSystem) PrintCwdContents() {
+	length := len(egfs.Cwd.Nodes)
 	builder := strings.Builder{}
-	builder.WriteString("Directories: [")
-	for index, dir := range egfs.Cwd.Directories {
-		builder.WriteString(dir.Name)
-		if index < length-1 {
-			builder.WriteString(",")
-		}
-	}
-	builder.WriteString("]\n")
-	fmt.Print(builder.String())
-}
-
-func (egfs *EGFileSystem) PrintCwdFiles() {
-	length := len(egfs.Cwd.Files)
-	builder := strings.Builder{}
-	builder.WriteString("Files: [")
-	for index, file := range egfs.Cwd.Files {
-		builder.WriteString(file.Name)
+	builder.WriteString("[")
+	for index, node := range egfs.Cwd.Nodes {
+		builder.WriteString(node.Name)
 		if index < length-1 {
 			builder.WriteString(",")
 		}
@@ -82,8 +68,7 @@ func (egfs *EGFileSystem) Get(command []string) {
 			return
 		}
 
-		egfs.PrintCwdDirectories()
-		egfs.PrintCwdFiles()
+		egfs.PrintCwdContents()
 	} else {
 		fmt.Print("Unknown get command.")
 	}
@@ -100,8 +85,8 @@ func (egfs *EGFileSystem) Make(command []string) {
 		fmt.Printf("Invalid name %s: must be wrapped in quotes.", name)
 		return
 	}
-	newDir := Directory{Directories: nil, Files: nil, Name: name}
-	egfs.Cwd.Directories = append(egfs.Cwd.Directories, &newDir)
+	newDir := Node{Nodes: nil, File: nil, IsDirectory: true, Name: name}
+	egfs.Cwd.Nodes = append(egfs.Cwd.Nodes, &newDir)
 }
 
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
@@ -116,7 +101,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	}
 
 	newCwdName := command[3]
-	for _, dir := range egfs.Cwd.Directories {
+	for _, dir := range egfs.Cwd.Nodes {
 		if dir.Name == newCwdName {
 			egfs.Cwd = dir
 			fmt.Printf("=> %s", dir.Name)
