@@ -11,7 +11,7 @@ import (
 func main() {
 	fmt.Printf("Welcome to egfs.  Enter input: \n")
 	root := egfs.Directory{Directories: nil, Files: nil, Name: "/"}
-	egfs := egfs.EGFileSystem{Cwd: &root}
+	egfs := egfs.EGFileSystem{Cwd: &root, Root: &root}
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		input, err := reader.ReadString('\n')
