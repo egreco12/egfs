@@ -35,6 +35,8 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 		egfs.Make(command)
 	case "move":
 		egfs.Move(command)
+	case "set":
+		egfs.Set(command)
 	case "write":
 		egfs.WriteToFile(command)
 	default:
@@ -60,7 +62,40 @@ func (egfs *EGFileSystem) PrintCwdContents() {
 	fmt.Print(builder.String())
 }
 
-// Prints contents of provided entity in cwd
+// Sets permissions on a given file.  In the form of:
+// set read role_name "file_name"
+// TODO: Probably lots of validadtion would need to happen here.
+func (egfs *EGFileSystem) Set(command []string) {
+	if len(command) < 4 {
+		fmt.Print("Error: Invalid set command; requires 4 arguments.")
+		return
+	}
+
+	perm := command[1]
+	role := command[2]
+	name := command[3]
+
+	if !IsValidEntity(name) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", name)
+		return
+	}
+
+	file := egfs.GetEntity(name)
+	if file == nil {
+		fmt.Printf("Error: file name %s not found.", name)
+		return
+	}
+
+	if file.File == nil {
+		fmt.Printf("Error: entity %s is not a file.", name)
+		return
+	}
+
+	file.File.SetRolePermission(role, perm)
+	fmt.Printf("Permission %s set on role %s on file %s.", perm, role, name)
+}
+
+// Prints contents of provided entity in cwd.
 func (egfs *EGFileSystem) Get(command []string) {
 	getType := command[1]
 	switch getType {
@@ -68,6 +103,8 @@ func (egfs *EGFileSystem) Get(command []string) {
 		egfs.GetWorkingDirectory(command)
 	case "file":
 		egfs.GetFileContents(command)
+	case "permissions":
+		egfs.GetPermissions(command)
 	default:
 		fmt.Print("Error: Unknown get command.")
 	}
@@ -115,10 +152,38 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 	entity.File.PrintContent()
 }
 
+// Prints the permissions of the provided file
+func (egfs *EGFileSystem) GetPermissions(command []string) {
+	if len(command) < 4 {
+		fmt.Print("Error: Make command input must include at least 4 arguments.")
+		return
+	}
+
+	role := command[2]
+	name := command[3]
+	if !IsValidEntity(name) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", name)
+		return
+	}
+
+	entity := egfs.GetEntity(name)
+	if entity == nil {
+		fmt.Printf("Error: provided entity %s does not exist", name)
+		return
+	}
+
+	if entity.File == nil {
+		fmt.Print("Error: provided entity is not a file.")
+		return
+	}
+
+	entity.File.PrintPermissions(role)
+}
+
 // Creates a new entity
 func (egfs *EGFileSystem) Make(command []string) {
 	if len(command) < 3 {
-		fmt.Print("Error: Make command input must include at least 3 strings.")
+		fmt.Print("Error: Make command input must include at least 3 arguments.")
 		return
 	}
 
@@ -161,7 +226,10 @@ func (egfs *EGFileSystem) MakeDirectory(name string) *Entity {
 
 // Creates an empty file under cwd
 func (egfs *EGFileSystem) MakeFile(name string) *Entity {
-	entity := Entity{Entities: make(map[string]*Entity), File: &File{}, Name: name}
+	entity := Entity{
+		Entities: make(map[string]*Entity),
+		File:     &File{Permissions: make(map[string][]string)},
+		Name:     name}
 	egfs.Cwd.Entities[entity.Name] = &entity
 	fmt.Printf("Created file %s.", entity.Name)
 	return &entity
