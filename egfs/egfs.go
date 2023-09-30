@@ -100,8 +100,8 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 		return
 	}
 
-	node, exists := egfs.Cwd.Nodes[entity]
-	if !exists {
+	node := egfs.GetNode(entity)
+	if node == nil {
 		fmt.Printf("Error: provided filename %s does not exist", entity)
 		return
 	}
@@ -148,7 +148,7 @@ func (egfs *EGFileSystem) MakeDirectory(name string) {
 
 // Creates an empty file under cwd
 func (egfs *EGFileSystem) MakeFile(name string) {
-	node := Node{Nodes: make(map[string]*Node), File: &File{Name: name}, Name: name}
+	node := Node{Nodes: make(map[string]*Node), File: &File{}, Name: name}
 	egfs.Cwd.Nodes[node.Name] = &node
 }
 
@@ -208,7 +208,8 @@ func (egfs *EGFileSystem) WriteToFile(command []string) {
 		return
 	}
 
-	node.File.Append([]byte(command[2]))
+	// Re-expand command; everything after filename is content
+	node.File.Append([]byte(strings.Join(command[2:], " ")))
 }
 
 // Moves entity to new location in cwd
@@ -226,10 +227,12 @@ func (egfs *EGFileSystem) Move(command []string) {
 	}
 
 	node := egfs.GetNode(entity)
+	delete(egfs.Cwd.Nodes, entity)
 	node.Name = newLoc
-
+	egfs.Cwd.Nodes[newLoc] = node
 }
 
+// Returns node with provided name in cwd
 func (egfs *EGFileSystem) GetNode(name string) *Node {
 	node, exists := egfs.Cwd.Nodes[name]
 	if !exists {

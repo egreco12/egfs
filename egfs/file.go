@@ -4,7 +4,6 @@ import "fmt"
 
 type File struct {
 	content []byte
-	Name    string
 }
 
 func (file *File) Overwrite(c []byte) {
