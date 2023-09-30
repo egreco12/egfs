@@ -18,31 +18,30 @@ func IsValidEntity(entity string) bool {
 func (egfs *EGFileSystem) ProcessInput(input string) {
 	command := strings.Split(input, " ")
 	if len(command) < 1 {
-		fmt.Print("Invalid command.")
+		fmt.Print("Error: Invalid command.")
 		return
 	}
 
 	switch command[0] {
-	case "make":
-		egfs.Make(command)
-
 	case "change":
 		egfs.ChangeDirectory(command)
-
-	case "get":
-		egfs.Get(command)
-
 	case "delete":
 		egfs.Delete(command)
-
+	case "get":
+		egfs.Get(command)
+	case "make":
+		egfs.Make(command)
+	case "move":
+		egfs.Move(command)
 	case "write":
 		egfs.WriteToFile(command)
 
 	default:
-		fmt.Print("Invalid command.  Try again!")
+		fmt.Print("Error: Invalid command.  Try again!")
 	}
 }
 
+// Prints the name of entities in cwd
 func (egfs *EGFileSystem) PrintCwdContents() {
 	length := len(egfs.Cwd.Nodes)
 	builder := strings.Builder{}
@@ -69,10 +68,11 @@ func (egfs *EGFileSystem) Get(command []string) {
 	case "file":
 		egfs.GetFileContents(command)
 	default:
-		fmt.Print("Unknown get command.")
+		fmt.Print("Error: Unknown get command.")
 	}
 }
 
+// Prints the name or contents of cwd
 func (egfs *EGFileSystem) GetWorkingDirectory(command []string) {
 	if len(command) == 3 {
 		if command[2] != "directory" {
@@ -92,6 +92,7 @@ func (egfs *EGFileSystem) GetWorkingDirectory(command []string) {
 	egfs.PrintCwdContents()
 }
 
+// Prints the contents of the provided file
 func (egfs *EGFileSystem) GetFileContents(command []string) {
 	entity := command[2]
 	if !IsValidEntity(entity) {
@@ -113,6 +114,7 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 	node.File.PrintContent()
 }
 
+// Creates a new entity
 func (egfs *EGFileSystem) Make(command []string) {
 	if len(command) < 3 {
 		fmt.Print("Error: Make command input must include at least 3 strings.")
@@ -181,6 +183,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	}
 }
 
+// Deletes a file under cwd
 func (egfs *EGFileSystem) Delete(command []string) {
 	entity := command[1]
 	if !IsValidEntity(entity) {
@@ -196,23 +199,42 @@ func (egfs *EGFileSystem) Delete(command []string) {
 	delete(egfs.Cwd.Nodes, entity)
 }
 
+// Writes to file under cwd
 func (egfs *EGFileSystem) WriteToFile(command []string) {
-	if len(command) < 3 {
-		fmt.Print("Error: Invalid number of arguments, must provide 3 arguments to write to file.")
-		return
-	}
-
 	name := command[1]
-	node, exists := egfs.Cwd.Nodes[name]
-	if !exists {
-		fmt.Printf("Error: provided filename %s does not exist", name)
-		return
-	}
-
-	if node.File == nil {
-		fmt.Print("Error: provided node is not a file.")
+	node := egfs.GetNode(name)
+	if node == nil {
+		fmt.Printf("Error: provided entity %s does not exist", name)
 		return
 	}
 
 	node.File.Append([]byte(command[2]))
+}
+
+// Moves entity to new location in cwd
+func (egfs *EGFileSystem) Move(command []string) {
+	entity := command[1]
+	if !IsValidEntity(entity) {
+		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
+		return
+	}
+
+	newLoc := command[2]
+	if !IsValidEntity(newLoc) {
+		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
+		return
+	}
+
+	node := egfs.GetNode(entity)
+	node.Name = newLoc
+
+}
+
+func (egfs *EGFileSystem) GetNode(name string) *Node {
+	node, exists := egfs.Cwd.Nodes[name]
+	if !exists {
+		return nil
+	}
+
+	return node
 }
