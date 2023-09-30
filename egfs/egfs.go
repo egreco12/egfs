@@ -190,7 +190,7 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 // Prints the permissions of the provided file
 func (egfs *EGFileSystem) GetPermissions(command []string) {
 	if len(command) < 4 {
-		fmt.Print("Error: Make command input must include at least 4 arguments.")
+		fmt.Print("Error: Get command input must include at least 4 arguments.")
 		return
 	}
 
