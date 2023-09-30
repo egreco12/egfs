@@ -37,7 +37,6 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 		egfs.Move(command)
 	case "write":
 		egfs.WriteToFile(command)
-
 	default:
 		fmt.Print("Error: Invalid command.  Try again!")
 	}
@@ -156,6 +155,7 @@ func (egfs *EGFileSystem) Make(command []string) {
 func (egfs *EGFileSystem) MakeDirectory(name string) *Node {
 	node := Node{Nodes: make(map[string]*Node), Name: name}
 	egfs.Cwd.Nodes[node.Name] = &node
+	fmt.Printf("Created directory %s.", node.Name)
 	return &node
 }
 
@@ -163,6 +163,7 @@ func (egfs *EGFileSystem) MakeDirectory(name string) *Node {
 func (egfs *EGFileSystem) MakeFile(name string) *Node {
 	node := Node{Nodes: make(map[string]*Node), File: &File{}, Name: name}
 	egfs.Cwd.Nodes[node.Name] = &node
+	fmt.Printf("Created file %s.", node.Name)
 	return &node
 }
 
@@ -187,27 +188,39 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 		}
 
 		egfs.Cwd = egfs.Cwd.Parent
-		egfs.CwdPath = strings.Join(strings.Split(egfs.CwdPath, "/")[:1], "/")
-		return
-	}
+		// HACK: There's probably a cleaner way to do this, but if parent's parent is root, just overwrite CwdPath to ""
+		if egfs.Cwd.Parent == nil {
+			egfs.CwdPath = ""
+		} else {
+			egfs.CwdPath = strings.Join(strings.Split(egfs.CwdPath, "/")[:1], "/")
+		}
+	} else {
+		var found bool = false
+		for _, node := range egfs.Cwd.Nodes {
+			if node.Name == newCwdName {
+				if node.File != nil {
+					fmt.Printf("Error: Provided entity %s is a file.  Provide a directory to change to.", node.Name)
+					return
+				}
 
-	var found bool = false
-	for _, dir := range egfs.Cwd.Nodes {
-		if dir.Name == newCwdName {
-			newCwdName := strings.ReplaceAll(newCwdName, "\"", "")
-			found = true
-			if egfs.CwdPath == "" {
-				egfs.CwdPath = newCwdName
-			} else {
-				egfs.CwdPath = fmt.Sprintf("%s/%s", egfs.CwdPath, newCwdName)
+				newCwdName := strings.ReplaceAll(newCwdName, "\"", "")
+				found = true
+				if egfs.CwdPath == "" {
+					egfs.CwdPath = newCwdName
+				} else {
+					egfs.CwdPath = fmt.Sprintf("%s/%s", egfs.CwdPath, newCwdName)
+				}
+				egfs.Cwd = dir
 			}
-			egfs.Cwd = dir
+		}
+
+		if !found {
+			fmt.Print("Directory not found.")
+			return
 		}
 	}
 
-	if !found {
-		fmt.Print("Directory not found.")
-	}
+	egfs.PrintCwdContents()
 }
 
 // Deletes an entity under cwd
@@ -220,6 +233,7 @@ func (egfs *EGFileSystem) Delete(command []string) {
 
 	// Node to delete can only be in CWD's contents
 	delete(egfs.Cwd.Nodes, entity)
+	fmt.Printf("Deleted entity %s.", entity)
 }
 
 // Writes to file under cwd
@@ -233,6 +247,7 @@ func (egfs *EGFileSystem) WriteToFile(command []string) {
 
 	// Re-expand command; everything after filename is content
 	node.File.Append([]byte(strings.Join(command[2:], " ")))
+	fmt.Printf("Finished writing to file %s.", name)
 }
 
 // Moves entity to new location in cwd
@@ -253,6 +268,7 @@ func (egfs *EGFileSystem) Move(command []string) {
 	delete(egfs.Cwd.Nodes, entity)
 	node.Name = newLoc
 	egfs.Cwd.Nodes[newLoc] = node
+	fmt.Printf("Moved to new entity %s.", newLoc)
 }
 
 // Returns node with provided name in cwd
