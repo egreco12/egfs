@@ -134,31 +134,39 @@ func (egfs *EGFileSystem) Make(command []string) {
 		return
 	}
 
+	var node *Node
 	switch command[2] {
 	case "directory":
-		egfs.MakeDirectory(entity)
-		return
+		node = egfs.MakeDirectory(entity)
 
 	case "file":
-		egfs.MakeFile(entity)
+		node = egfs.MakeFile(entity)
+
+	default:
+		fmt.Print("Error: Invalid Make command.")
 		return
 	}
 
-	fmt.Print("Error: Invalid Make command.")
+	if node != nil {
+		node.Parent = egfs.Cwd
+	}
 }
 
 // Creates an empty directory under cwd
-func (egfs *EGFileSystem) MakeDirectory(name string) {
+func (egfs *EGFileSystem) MakeDirectory(name string) *Node {
 	node := Node{Nodes: make(map[string]*Node), Name: name}
 	egfs.Cwd.Nodes[node.Name] = &node
+	return &node
 }
 
 // Creates an empty file under cwd
-func (egfs *EGFileSystem) MakeFile(name string) {
+func (egfs *EGFileSystem) MakeFile(name string) *Node {
 	node := Node{Nodes: make(map[string]*Node), File: &File{}, Name: name}
 	egfs.Cwd.Nodes[node.Name] = &node
+	return &node
 }
 
+// Changes directory.  Can be to parent directory or any nodes.
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	if len(command) < 4 {
 		fmt.Print("Error: Invalid change directory command.  Must contain 4 strings")
@@ -171,6 +179,18 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	}
 
 	newCwdName := command[3]
+	// Implies change directory to parent
+	if newCwdName == ".." {
+		if egfs.Cwd.Parent == nil {
+			fmt.Print("Error: Already at root, cant change to parent directory.")
+			return
+		}
+
+		egfs.Cwd = egfs.Cwd.Parent
+		egfs.CwdPath = strings.Join(strings.Split(egfs.CwdPath, "/")[:1], "/")
+		return
+	}
+
 	var found bool = false
 	for _, dir := range egfs.Cwd.Nodes {
 		if dir.Name == newCwdName {
