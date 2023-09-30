@@ -33,6 +33,11 @@ func (file *File) PrintContent() {
 // Checks permission on a file.  Currently only read and write are allowd;
 // if isRead is false, we assume we are checking write perms, etc.
 func (file *File) CheckPermission(user User, isRead bool) bool {
+	// Allow everybody through if no permissions set
+	if len(file.Permissions) == 0 {
+		return true
+	}
+
 	perms, exists := file.Permissions[user.Role]
 	if !exists {
 		return false
