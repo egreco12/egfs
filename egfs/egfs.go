@@ -2,6 +2,7 @@ package egfs
 
 import (
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -28,6 +29,8 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 		egfs.ChangeDirectory(command)
 	case "delete":
 		egfs.Delete(command)
+	case "exit":
+		os.Exit(0)
 	case "get":
 		egfs.Get(command)
 	case "find":
@@ -253,7 +256,14 @@ func (egfs *EGFileSystem) Make(command []string) {
 
 // Creates an empty directory under cwd
 func (egfs *EGFileSystem) MakeDirectory(name string) *Entity {
-	entity := Entity{Entities: make(map[string]*Entity), Name: name}
+	var parent *Entity
+	if egfs.Cwd == egfs.Root {
+		parent = nil
+	} else {
+		parent = egfs.Cwd
+	}
+
+	entity := Entity{Entities: make(map[string]*Entity), Name: name, Parent: parent}
 	egfs.Cwd.Entities[entity.Name] = &entity
 	fmt.Printf("Created directory %s.", entity.Name)
 	return &entity
@@ -261,10 +271,18 @@ func (egfs *EGFileSystem) MakeDirectory(name string) *Entity {
 
 // Creates an empty file under cwd
 func (egfs *EGFileSystem) MakeFile(name string) *Entity {
+	var parent *Entity
+	if egfs.Cwd == egfs.Root {
+		parent = nil
+	} else {
+		parent = egfs.Cwd
+	}
+
 	entity := Entity{
 		Entities: make(map[string]*Entity),
 		File:     &File{Permissions: make(map[string][]string)},
-		Name:     name}
+		Name:     name,
+		Parent:   parent}
 	egfs.Cwd.Entities[entity.Name] = &entity
 	fmt.Printf("Created file %s.", entity.Name)
 	return &entity
@@ -290,13 +308,18 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 			return
 		}
 
-		egfs.Cwd = egfs.Cwd.Parent
 		// HACK: There's probably a cleaner way to do this, but if parent's parent is root, just overwrite CwdPath to ""
-		if egfs.Cwd.Parent == nil {
+		if egfs.Cwd.Parent.Parent == nil {
 			egfs.CwdPath = ""
 		} else {
-			egfs.CwdPath = strings.Join(strings.Split(egfs.CwdPath, "/")[:1], "/")
+			// This is pretty ugly; I'm sure there is a cleaner way to split
+			// a string on a character and remove the last entry, I'm just not
+			// sure what it is at the moment
+			s := strings.Split(egfs.CwdPath, "/")
+			s = s[:len(s)-1]
+			egfs.CwdPath = strings.Join(s, "/")
 		}
+		egfs.Cwd = egfs.Cwd.Parent
 	} else {
 		var found bool = false
 		for _, entity := range egfs.Cwd.Entities {
