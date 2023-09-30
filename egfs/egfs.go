@@ -11,6 +11,10 @@ type EGFileSystem struct {
 	CwdPath string
 }
 
+func IsValidEntity(entity string) bool {
+	return strings.HasPrefix(entity, "\"") && strings.HasSuffix(entity, "\"")
+}
+
 func (egfs *EGFileSystem) ProcessInput(input string) {
 	command := strings.Split(input, " ")
 	if len(command) < 1 {
@@ -57,31 +61,56 @@ func (egfs *EGFileSystem) PrintCwdContents() {
 }
 
 func (egfs *EGFileSystem) Get(command []string) {
-	if len(command) < 3 {
-		fmt.Print("Error: Get command must include at least 3 strings.")
+	getType := command[1]
+	switch getType {
+	case "working":
+		egfs.GetWorkingDirectory(command)
+		return
+	case "file":
+		egfs.GetFileContents(command)
+	default:
+		fmt.Print("Unknown get command.")
+	}
+}
+
+func (egfs *EGFileSystem) GetWorkingDirectory(command []string) {
+	if len(command) == 3 {
+		if command[2] != "directory" {
+			fmt.Print("Error: Unknown Get Working command.")
+			return
+		}
+
+		fmt.Printf("=> /%s", egfs.CwdPath)
 		return
 	}
 
-	if command[1] == "working" {
-		if len(command) == 3 {
-			if command[2] != "directory" {
-				fmt.Print("Error: Unknown Get Working command.")
-				return
-			}
-
-			fmt.Printf("=> /%s", egfs.CwdPath)
-			return
-		}
-
-		if command[2] != "directory" && command[3] != "contents" {
-			fmt.Print("Error: Uknown Get Working command.")
-			return
-		}
-
-		egfs.PrintCwdContents()
-	} else {
-		fmt.Print("Unknown get command.")
+	if command[2] != "directory" && command[3] != "contents" {
+		fmt.Print("Error: Uknown Get Working command.")
+		return
 	}
+
+	egfs.PrintCwdContents()
+}
+
+func (egfs *EGFileSystem) GetFileContents(command []string) {
+	entity := command[2]
+	if !IsValidEntity(entity) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", entity)
+		return
+	}
+
+	node, exists := egfs.Cwd.Nodes[entity]
+	if !exists {
+		fmt.Printf("Error: provided filename %s does not exist", entity)
+		return
+	}
+
+	if node.File == nil {
+		fmt.Print("Error: provided node is not a file.")
+		return
+	}
+
+	node.File.PrintContent()
 }
 
 func (egfs *EGFileSystem) Make(command []string) {
@@ -90,19 +119,19 @@ func (egfs *EGFileSystem) Make(command []string) {
 		return
 	}
 
-	name := command[1]
-	if !strings.HasPrefix(name, "\"") && !strings.HasSuffix(name, "\"") {
-		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", name)
+	entity := command[1]
+	if !IsValidEntity(entity) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", entity)
 		return
 	}
 
 	switch command[2] {
 	case "directory":
-		egfs.MakeDirectory(name)
+		egfs.MakeDirectory(entity)
 		return
 
 	case "file":
-		egfs.MakeFile(name)
+		egfs.MakeFile(entity)
 		return
 	}
 
@@ -154,7 +183,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 
 func (egfs *EGFileSystem) Delete(command []string) {
 	entity := command[1]
-	if !strings.HasPrefix(entity, "\"") && !strings.HasSuffix(entity, "\"") {
+	if !IsValidEntity(entity) {
 		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
 		return
 	}
