@@ -16,7 +16,7 @@ Current supported commands:
 * **delete**: Deletes an entity (could be a file or directory)
   * Example: `delete "entity_name"`
 * **find**: Finds the name of an entity within the current working directory
-  * Example: `find "entity_name"
+  * Example: `find "entity_name"`
 * **write**: Writes content to a provided file.  Overwrites the provided file with all content after the provided filename.
   * Example: `write "new_file" file contents`
     * Content of file in this case is `file contents`

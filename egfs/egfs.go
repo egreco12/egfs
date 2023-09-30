@@ -6,8 +6,8 @@ import (
 )
 
 type EGFileSystem struct {
-	Cwd     *Node
-	Root    *Node
+	Cwd     *Entity
+	Root    *Entity
 	CwdPath string
 }
 
@@ -44,12 +44,12 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 
 // Prints the name of entities in cwd
 func (egfs *EGFileSystem) PrintCwdContents() {
-	length := len(egfs.Cwd.Nodes)
+	length := len(egfs.Cwd.Entities)
 	builder := strings.Builder{}
 	builder.WriteString("[")
 	index := 0
-	for _, node := range egfs.Cwd.Nodes {
-		builder.WriteString(node.Name)
+	for _, entity := range egfs.Cwd.Entities {
+		builder.WriteString(entity.Name)
 		if index < length-1 {
 			builder.WriteString(",")
 		}
@@ -60,12 +60,12 @@ func (egfs *EGFileSystem) PrintCwdContents() {
 	fmt.Print(builder.String())
 }
 
+// Prints contents of provided entity in cwd
 func (egfs *EGFileSystem) Get(command []string) {
 	getType := command[1]
 	switch getType {
 	case "working":
 		egfs.GetWorkingDirectory(command)
-		return
 	case "file":
 		egfs.GetFileContents(command)
 	default:
@@ -81,7 +81,7 @@ func (egfs *EGFileSystem) GetWorkingDirectory(command []string) {
 			return
 		}
 
-		fmt.Printf("=> /%s", egfs.CwdPath)
+		fmt.Printf("/%s", egfs.CwdPath)
 		return
 	}
 
@@ -95,24 +95,24 @@ func (egfs *EGFileSystem) GetWorkingDirectory(command []string) {
 
 // Prints the contents of the provided file
 func (egfs *EGFileSystem) GetFileContents(command []string) {
-	entity := command[2]
-	if !IsValidEntity(entity) {
-		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", entity)
+	name := command[2]
+	if !IsValidEntity(name) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", name)
 		return
 	}
 
-	node := egfs.GetNode(entity)
-	if node == nil {
-		fmt.Printf("Error: provided filename %s does not exist", entity)
+	entity := egfs.GetEntity(name)
+	if entity == nil {
+		fmt.Printf("Error: provided entity %s does not exist", entity)
 		return
 	}
 
-	if node.File == nil {
-		fmt.Print("Error: provided node is not a file.")
+	if entity.File == nil {
+		fmt.Print("Error: provided entity is not a file.")
 		return
 	}
 
-	node.File.PrintContent()
+	entity.File.PrintContent()
 }
 
 // Creates a new entity
@@ -122,52 +122,52 @@ func (egfs *EGFileSystem) Make(command []string) {
 		return
 	}
 
-	entity := command[1]
-	if !IsValidEntity(entity) {
-		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", entity)
+	name := command[1]
+	if !IsValidEntity(name) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", name)
 		return
 	}
 
-	if egfs.GetNode(entity) != nil {
-		fmt.Printf("Error: Entity with name %s already exists.", entity)
+	if egfs.GetEntity(name) != nil {
+		fmt.Printf("Error: Entity with name %s already exists.", name)
 		return
 	}
 
-	var node *Node
+	var entity *Entity
 	switch command[2] {
 	case "directory":
-		node = egfs.MakeDirectory(entity)
+		entity = egfs.MakeDirectory(name)
 
 	case "file":
-		node = egfs.MakeFile(entity)
+		entity = egfs.MakeFile(name)
 
 	default:
 		fmt.Print("Error: Invalid Make command.")
 		return
 	}
 
-	if node != nil {
-		node.Parent = egfs.Cwd
+	if entity != nil {
+		entity.Parent = egfs.Cwd
 	}
 }
 
 // Creates an empty directory under cwd
-func (egfs *EGFileSystem) MakeDirectory(name string) *Node {
-	node := Node{Nodes: make(map[string]*Node), Name: name}
-	egfs.Cwd.Nodes[node.Name] = &node
-	fmt.Printf("Created directory %s.", node.Name)
-	return &node
+func (egfs *EGFileSystem) MakeDirectory(name string) *Entity {
+	entity := Entity{Entities: make(map[string]*Entity), Name: name}
+	egfs.Cwd.Entities[entity.Name] = &entity
+	fmt.Printf("Created directory %s.", entity.Name)
+	return &entity
 }
 
 // Creates an empty file under cwd
-func (egfs *EGFileSystem) MakeFile(name string) *Node {
-	node := Node{Nodes: make(map[string]*Node), File: &File{}, Name: name}
-	egfs.Cwd.Nodes[node.Name] = &node
-	fmt.Printf("Created file %s.", node.Name)
-	return &node
+func (egfs *EGFileSystem) MakeFile(name string) *Entity {
+	entity := Entity{Entities: make(map[string]*Entity), File: &File{}, Name: name}
+	egfs.Cwd.Entities[entity.Name] = &entity
+	fmt.Printf("Created file %s.", entity.Name)
+	return &entity
 }
 
-// Changes directory.  Can be to parent directory or any nodes.
+// Changes directory.  Can be to parent directory or any entitys.
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	if len(command) < 4 {
 		fmt.Print("Error: Invalid change directory command.  Must contain 4 arguments")
@@ -196,10 +196,10 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 		}
 	} else {
 		var found bool = false
-		for _, node := range egfs.Cwd.Nodes {
-			if node.Name == newCwdName {
-				if node.File != nil {
-					fmt.Printf("Error: Provided entity %s is a file.  Provide a directory to change to.", node.Name)
+		for _, entity := range egfs.Cwd.Entities {
+			if entity.Name == newCwdName {
+				if entity.File != nil {
+					fmt.Printf("Error: Provided entity %s is a file.  Provide a directory to change to.", entity.Name)
 					return
 				}
 
@@ -210,7 +210,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 				} else {
 					egfs.CwdPath = fmt.Sprintf("%s/%s", egfs.CwdPath, newCwdName)
 				}
-				egfs.Cwd = node
+				egfs.Cwd = entity
 			}
 		}
 
@@ -231,54 +231,54 @@ func (egfs *EGFileSystem) Delete(command []string) {
 		return
 	}
 
-	// Node to delete can only be in CWD's contents
-	delete(egfs.Cwd.Nodes, entity)
+	// Entity to delete can only be in CWD's contents
+	delete(egfs.Cwd.Entities, entity)
 	fmt.Printf("Deleted entity %s.", entity)
 }
 
 // Writes to file under cwd
 func (egfs *EGFileSystem) WriteToFile(command []string) {
 	name := command[1]
-	node := egfs.GetNode(name)
-	if node == nil {
+	entity := egfs.GetEntity(name)
+	if entity == nil {
 		fmt.Printf("Error: provided entity %s does not exist", name)
 		return
 	}
 
 	// Re-expand command; everything after filename is content
-	node.File.Append([]byte(strings.Join(command[2:], " ")))
+	entity.File.Append([]byte(strings.Join(command[2:], " ")))
 	fmt.Printf("Finished writing to file %s.", name)
 }
 
 // Moves entity to new location in cwd
 func (egfs *EGFileSystem) Move(command []string) {
-	entity := command[1]
-	if !IsValidEntity(entity) {
-		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
+	name := command[1]
+	if !IsValidEntity(name) {
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", name)
 		return
 	}
 
 	newLoc := command[2]
 	if !IsValidEntity(newLoc) {
-		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
+		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", newLoc)
 		return
 	}
 
-	node := egfs.GetNode(entity)
-	delete(egfs.Cwd.Nodes, entity)
-	node.Name = newLoc
-	egfs.Cwd.Nodes[newLoc] = node
+	entity := egfs.GetEntity(name)
+	delete(egfs.Cwd.Entities, name)
+	entity.Name = newLoc
+	egfs.Cwd.Entities[newLoc] = entity
 	fmt.Printf("Moved to new entity %s.", newLoc)
 }
 
-// Returns node with provided name in cwd
-func (egfs *EGFileSystem) GetNode(name string) *Node {
-	node, exists := egfs.Cwd.Nodes[name]
+// Returns entity with provided name in cwd
+func (egfs *EGFileSystem) GetEntity(name string) *Entity {
+	entity, exists := egfs.Cwd.Entities[name]
 	if !exists {
 		return nil
 	}
 
-	return node
+	return entity
 }
 
 // Finds a file in cwd
@@ -289,10 +289,10 @@ func (egfs *EGFileSystem) Find(command []string) {
 		return
 	}
 
-	for _, node := range egfs.Cwd.Nodes {
-		if node.Name == name {
+	for _, entity := range egfs.Cwd.Entities {
+		if entity.Name == name {
 			entityType := "file"
-			if node.File == nil {
+			if entity.File == nil {
 				entityType = "directory"
 			}
 
