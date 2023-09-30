@@ -210,7 +210,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 				} else {
 					egfs.CwdPath = fmt.Sprintf("%s/%s", egfs.CwdPath, newCwdName)
 				}
-				egfs.Cwd = dir
+				egfs.Cwd = node
 			}
 		}
 
