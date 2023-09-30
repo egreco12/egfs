@@ -9,7 +9,7 @@ type EGFileSystem struct {
 	Cwd     *Entity
 	Root    *Entity
 	CwdPath string
-	User    string
+	User    User
 }
 
 func IsValidEntity(entity string) bool {
@@ -110,28 +110,19 @@ func (egfs *EGFileSystem) SetOrGetUser(command []string) {
 
 	switch verb {
 	case "set":
-		if commandLength < 3 {
-			fmt.Print("Error: Invalid set command; requires minimum 3 arguments to set user.")
+		if commandLength < 4 {
+			fmt.Print("Error: Invalid set command; requires minimum 4 arguments to set user.")
 			return
 		}
-		egfs.User = command[2]
-		fmt.Printf("User set as %s.", egfs.User)
+		name := command[2]
+		role := command[3]
+		egfs.User = User{Name: name, Role: role}
+		fmt.Printf("User set as %s with role %s.", egfs.User.Name, egfs.User.Role)
 	case "get":
-		fmt.Printf("Current user: %s", egfs.User)
+		fmt.Printf("Current user: %s, role: %s", egfs.User.Name, egfs.User.Role)
 	default:
 		fmt.Printf("Error: invalid verb %s", verb)
 	}
-}
-
-// Gets the current user.
-func (egfs *EGFileSystem) GetUser(command []string) {
-	if len(command) < 2 {
-		fmt.Print("Error: Invalid set command; requires 2 arguments.")
-		return
-	}
-
-	egfs.User = command[1]
-	fmt.Printf("User set as %s.", egfs.User)
 }
 
 // Prints contents of provided entity in cwd.
@@ -185,6 +176,11 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 
 	if entity.File == nil {
 		fmt.Print("Error: provided entity is not a file.")
+		return
+	}
+
+	if !entity.File.CheckPermission(egfs.User, true) {
+		fmt.Printf("Error: Access denied for user %s", egfs.User)
 		return
 	}
 
