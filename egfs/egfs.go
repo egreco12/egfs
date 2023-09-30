@@ -180,7 +180,7 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 	}
 
 	if !entity.File.CheckPermission(egfs.User, true) {
-		fmt.Printf("Error: Access denied for user %s", egfs.User)
+		fmt.Printf("Error: Access denied for user %s", egfs.User.Name)
 		return
 	}
 
@@ -345,6 +345,11 @@ func (egfs *EGFileSystem) WriteToFile(command []string) {
 	entity := egfs.GetEntity(name)
 	if entity == nil {
 		fmt.Printf("Error: provided entity %s does not exist", name)
+		return
+	}
+
+	if !entity.File.CheckPermission(egfs.User, false) {
+		fmt.Printf("Error: Access denied for user %s", egfs.User.Name)
 		return
 	}
 
