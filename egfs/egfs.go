@@ -31,6 +31,9 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 	case "delete":
 		egfs.Delete(command)
 
+	case "write":
+		egfs.WriteToFile(command)
+
 	default:
 		fmt.Print("Invalid command.  Try again!")
 	}
@@ -93,12 +96,29 @@ func (egfs *EGFileSystem) Make(command []string) {
 		return
 	}
 
-	if command[2] != "directory" {
-		fmt.Print("Error: Invalid Make command.")
+	switch command[2] {
+	case "directory":
+		egfs.MakeDirectory(name)
+		return
+
+	case "file":
+		egfs.MakeFile(name)
 		return
 	}
-	newDir := Node{Nodes: make(map[string]*Node), File: nil, IsDirectory: true, Name: name}
-	egfs.Cwd.Nodes[newDir.Name] = &newDir
+
+	fmt.Print("Error: Invalid Make command.")
+}
+
+// Creates an empty directory under cwd
+func (egfs *EGFileSystem) MakeDirectory(name string) {
+	node := Node{Nodes: make(map[string]*Node), Name: name}
+	egfs.Cwd.Nodes[node.Name] = &node
+}
+
+// Creates an empty file under cwd
+func (egfs *EGFileSystem) MakeFile(name string) {
+	node := Node{Nodes: make(map[string]*Node), File: &File{Name: name}, Name: name}
+	egfs.Cwd.Nodes[node.Name] = &node
 }
 
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
@@ -145,4 +165,25 @@ func (egfs *EGFileSystem) Delete(command []string) {
 
 	// Node to delete can only be in CWD's contents
 	delete(egfs.Cwd.Nodes, entity)
+}
+
+func (egfs *EGFileSystem) WriteToFile(command []string) {
+	if len(command) < 3 {
+		fmt.Print("Error: Invalid number of arguments, must provide 3 arguments to write to file.")
+		return
+	}
+
+	name := command[1]
+	node, exists := egfs.Cwd.Nodes[name]
+	if !exists {
+		fmt.Printf("Error: provided filename %s does not exist", name)
+		return
+	}
+
+	if node.File == nil {
+		fmt.Print("Error: provided node is not a file.")
+		return
+	}
+
+	node.File.Append([]byte(command[2]))
 }

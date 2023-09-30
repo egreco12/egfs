@@ -10,7 +10,7 @@ import (
 
 func main() {
 	fmt.Printf("Welcome to egfs.  Enter input: \n")
-	root := egfs.Node{Nodes: make(map[string]*egfs.Node), File: nil, IsDirectory: true, Name: ""}
+	root := egfs.Node{Nodes: make(map[string]*egfs.Node), File: nil, Name: ""}
 	egfs := egfs.EGFileSystem{Cwd: &root, Root: &root, CwdPath: ""}
 	reader := bufio.NewReader(os.Stdin)
 	for {
