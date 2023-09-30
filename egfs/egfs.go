@@ -170,7 +170,7 @@ func (egfs *EGFileSystem) MakeFile(name string) *Node {
 // Changes directory.  Can be to parent directory or any nodes.
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	if len(command) < 4 {
-		fmt.Print("Error: Invalid change directory command.  Must contain 4 strings")
+		fmt.Print("Error: Invalid change directory command.  Must contain 4 arguments")
 		return
 	}
 

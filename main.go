@@ -14,6 +14,7 @@ func main() {
 	egfs := egfs.EGFileSystem{Cwd: &root, Root: &root, CwdPath: ""}
 	reader := bufio.NewReader(os.Stdin)
 	for {
+		fmt.Printf("%s=> ", egfs.CwdPath)
 		input, err := reader.ReadString('\n')
 		if err != nil {
 			fmt.Println("Error reading input: ", err)
