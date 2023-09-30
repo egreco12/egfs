@@ -9,6 +9,7 @@ type EGFileSystem struct {
 	Cwd     *Entity
 	Root    *Entity
 	CwdPath string
+	User    string
 }
 
 func IsValidEntity(entity string) bool {
@@ -37,6 +38,8 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 		egfs.Move(command)
 	case "set":
 		egfs.Set(command)
+	case "user":
+		egfs.SetOrGetUser(command)
 	case "write":
 		egfs.WriteToFile(command)
 	default:
@@ -93,6 +96,42 @@ func (egfs *EGFileSystem) Set(command []string) {
 
 	file.File.SetRolePermission(role, perm)
 	fmt.Printf("Permission %s set on role %s on file %s.", perm, role, name)
+}
+
+// Sets or gets the current user.  TODO: lots of validation to do here.
+func (egfs *EGFileSystem) SetOrGetUser(command []string) {
+	commandLength := len(command)
+	if commandLength < 2 {
+		fmt.Print("Error: Invalid set command; requires minimum 2 arguments.")
+		return
+	}
+
+	verb := command[1]
+
+	switch verb {
+	case "set":
+		if commandLength < 3 {
+			fmt.Print("Error: Invalid set command; requires minimum 3 arguments to set user.")
+			return
+		}
+		egfs.User = command[2]
+		fmt.Printf("User set as %s.", egfs.User)
+	case "get":
+		fmt.Printf("Current user: %s", egfs.User)
+	default:
+		fmt.Printf("Error: invalid verb %s", verb)
+	}
+}
+
+// Gets the current user.
+func (egfs *EGFileSystem) GetUser(command []string) {
+	if len(command) < 2 {
+		fmt.Print("Error: Invalid set command; requires 2 arguments.")
+		return
+	}
+
+	egfs.User = command[1]
+	fmt.Printf("User set as %s.", egfs.User)
 }
 
 // Prints contents of provided entity in cwd.
