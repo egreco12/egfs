@@ -103,7 +103,7 @@ func (egfs *EGFileSystem) GetFileContents(command []string) {
 
 	entity := egfs.GetEntity(name)
 	if entity == nil {
-		fmt.Printf("Error: provided entity %s does not exist", entity)
+		fmt.Printf("Error: provided entity %s does not exist", name)
 		return
 	}
 
