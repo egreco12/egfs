@@ -210,16 +210,12 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	}
 }
 
-// Deletes a file under cwd
+// Deletes an entity under cwd
 func (egfs *EGFileSystem) Delete(command []string) {
 	entity := command[1]
 	if !IsValidEntity(entity) {
 		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", entity)
 		return
-	}
-
-	if command[2] != "directory" {
-		fmt.Print("Error: invalid entity type provided.")
 	}
 
 	// Node to delete can only be in CWD's contents
