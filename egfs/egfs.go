@@ -29,6 +29,8 @@ func (egfs *EGFileSystem) ProcessInput(input string) {
 		egfs.Delete(command)
 	case "get":
 		egfs.Get(command)
+	case "find":
+		egfs.Find(command)
 	case "make":
 		egfs.Make(command)
 	case "move":
@@ -124,6 +126,11 @@ func (egfs *EGFileSystem) Make(command []string) {
 	entity := command[1]
 	if !IsValidEntity(entity) {
 		fmt.Printf("Error: Invalid entity %s: must be wrapped in quotes.", entity)
+		return
+	}
+
+	if egfs.GetNode(entity) != nil {
+		fmt.Printf("Error: Entity with name %s already exists.", entity)
 		return
 	}
 
@@ -240,4 +247,27 @@ func (egfs *EGFileSystem) GetNode(name string) *Node {
 	}
 
 	return node
+}
+
+// Finds a file in cwd
+func (egfs *EGFileSystem) Find(command []string) {
+	name := command[1]
+	if !IsValidEntity(name) {
+		fmt.Printf("Error: Invalid name %s: must be wrapped in quotes.", name)
+		return
+	}
+
+	for _, node := range egfs.Cwd.Nodes {
+		if node.Name == name {
+			entityType := "file"
+			if node.File == nil {
+				entityType = "directory"
+			}
+
+			fmt.Printf("Found entity with name %s, type: %s", name, entityType)
+			return
+		}
+	}
+
+	fmt.Print("Entity not found.")
 }
