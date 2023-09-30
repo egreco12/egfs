@@ -11,6 +11,7 @@ const (
 	WRITE = "write"
 )
 
+// Represents a file-like object in EGFS
 type File struct {
 	// Contains content of file
 	content []byte
@@ -18,14 +19,17 @@ type File struct {
 	Permissions map[string][]string
 }
 
+// Overwrites file with c
 func (file *File) Overwrite(c []byte) {
 	file.content = c
 }
 
+// Appends c to end of file
 func (file *File) Append(c []byte) {
 	file.content = append(file.content, c...)
 }
 
+// Prints content of file
 func (file *File) PrintContent() {
 	fmt.Print(string(file.content))
 }
@@ -60,7 +64,7 @@ func (file *File) SetRolePermission(role string, perm string) {
 	file.Permissions[role] = append(file.Permissions[role], perm)
 }
 
-// Prints the Permissions for a given role.
+// Prints the Permissions for a given role
 func (file *File) PrintPermissions(role string) {
 	length := len(file.Permissions)
 	builder := strings.Builder{}

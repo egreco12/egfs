@@ -6,6 +6,7 @@ import (
 	"strings"
 )
 
+// Represents EGFS.
 type EGFileSystem struct {
 	Cwd     *Entity
 	Root    *Entity
@@ -13,10 +14,15 @@ type EGFileSystem struct {
 	User    User
 }
 
+// Determines whether an Entity is valid.  In the CLI, all entities are
+// valid if surrounded by ""
 func IsValidEntity(entity string) bool {
 	return strings.HasPrefix(entity, "\"") && strings.HasSuffix(entity, "\"")
 }
 
+// Processes input.  The basic idea is to grab the first keyword, and branch from there.
+// Subsequent functions will handle further processing depending on the command.
+// Failures should just result in returning back to the main loop.
 func (egfs *EGFileSystem) ProcessInput(input string) {
 	command := strings.Split(input, " ")
 	if len(command) < 1 {
@@ -288,7 +294,7 @@ func (egfs *EGFileSystem) MakeFile(name string) *Entity {
 	return &entity
 }
 
-// Changes directory.  Can be to parent directory or any entitys.
+// Changes directory.  Can be to parent directory or any entities.
 func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	if len(command) < 4 {
 		fmt.Print("Error: Invalid change directory command.  Must contain 4 arguments")
