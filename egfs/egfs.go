@@ -313,7 +313,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 	// Implies change directory to parent
 	if newCwdName == ".." {
 		if egfs.Cwd.Parent == nil {
-			fmt.Print("Error: Already at root, cant change to parent directory.")
+			fmt.Print("Error: Already at root, can't change to parent directory.")
 			return
 		}
 
@@ -331,6 +331,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 		egfs.Cwd = egfs.Cwd.Parent
 	} else {
 		var found bool = false
+		// Find directory to change to, assuming it is a directory
 		for _, entity := range egfs.Cwd.Entities {
 			if entity.Name == newCwdName {
 				if entity.File != nil {
@@ -340,6 +341,8 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 
 				newCwdName := strings.ReplaceAll(newCwdName, "\"", "")
 				found = true
+				// Construct CwdPath.  TODO: This should probably be dynamically
+				// constructed, and not constructed every time we change directories.
 				if egfs.CwdPath == "" {
 					egfs.CwdPath = newCwdName
 				} else {
@@ -355,6 +358,7 @@ func (egfs *EGFileSystem) ChangeDirectory(command []string) {
 		}
 	}
 
+	// Change directory is successful, print current contents
 	egfs.PrintCwdContents()
 }
 
