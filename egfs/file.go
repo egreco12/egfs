@@ -55,13 +55,14 @@ func (file *File) CheckPermission(user User, isRead bool) bool {
 }
 
 // Sets permission for a given role on the file.  Permissions can be read or write.
-func (file *File) SetRolePermission(role string, perm string) {
+func (file *File) SetRolePermission(role string, perm string) bool {
 	if perm != READ && perm != WRITE {
-		fmt.Printf("Error: Invalid permission provided: %s", perm)
-		return
+		fmt.Printf("Error: Invalid permission provided: %s\n", perm)
+		return false
 	}
 
 	file.Permissions[role] = append(file.Permissions[role], perm)
+	return true
 }
 
 // Prints the Permissions for a given role

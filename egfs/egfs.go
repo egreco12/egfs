@@ -103,8 +103,11 @@ func (egfs *EGFileSystem) Set(command []string) {
 		return
 	}
 
-	file.File.SetRolePermission(role, perm)
-	fmt.Printf("Permission %s set on role %s on file %s.", perm, role, name)
+	if file.File.SetRolePermission(role, perm) {
+		fmt.Printf("Permission %s set on role %s on file %s.", perm, role, name)
+	} else {
+		fmt.Printf("Failed to set permission %s on role %s on file %s.", perm, role, name)
+	}
 }
 
 // Sets or gets the current user.  TODO: lots of validation to do here.
